@@ -52,19 +52,6 @@ and to print command in dry run use:
     snakemake -j1 -n -p 
 
 
-### Use Corresponding configfile:
-
-
-Just update your config file to include all your sample names, edit your interval.list file to include your intervals of interest, your path, etc for example: 
-
-  
-    snakemake -j1 --configfile config-WES.yaml 
-  
-or: 
-
-
-    snakemake -j1 configfile config-WGS.yaml 
-
 
 ### Resources 
 
