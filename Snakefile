@@ -1,5 +1,8 @@
 configfile: "config.yaml"
-SAMPLES = config['SAMPLES']
+
+with open(config['SAMPLES']) as fp:
+    SAMPLES= fp.read().splitlines()
+
 
 rule all: 
    input:
@@ -41,7 +44,7 @@ if config['PAIRED']:
              index = config['INDEX']
         shell:
            """
-           STAR --genomeDir {params.index} --runThreadN {params.threads} --readFilesIn {input[0]} {input[1]}  --outFileNamePrefix {params.prefix} --sjdbGTFfile {params.gtf}  --twopassMode Basic
+           STAR --genomeDir {params.index} --runThreadN {params.threads}  --readFilesCommand zcat  --readFilesIn {input[0]} {input[1]}  --outFileNamePrefix {params.prefix} --sjdbGTFfile {params.gtf}  --twopassMode Basic
            """
 
 
@@ -72,7 +75,7 @@ else:
              index = config['INDEX']
         shell:
            """
-           STAR --genomeDir {params.index} --runThreadN {params.threads} --readFilesIn {input}  --outFileNamePrefix {params.prefix} --sjdbGTFfile {params.gtf}  --twopassMode Basic
+           STAR --genomeDir {params.index} --runThreadN {params.threads} --readFilesIn {input} --readFilesCommand zcat --outFileNamePrefix {params.prefix} --sjdbGTFfile {params.gtf}  --twopassMode Basic
            """
 
 rule AddRG:
@@ -103,7 +106,7 @@ rule split:
     input: 
        "{sample}.dedupped.bam" 
     params: 
-       genome= config['GENOME']
+       genome = expand("{genome}.fasta", genome= config['GENOME'])
     output: 
        "{sample}.split.bam" 
     shell: 
@@ -115,7 +118,7 @@ rule recalibrate_a:
     input:
        "{sample}.split.bam"
     params:
-        genome= config['GENOME'],
+        genome = expand("{genome}.fasta", genome= config['GENOME']),
         DBSNP = config['DBSNP'],
         INDELS = config['INDELS'],
         GOLD_STANDARD = config['GOLD_STANDARD'] 
@@ -127,15 +130,16 @@ rule recalibrate_a:
        """
 
 rule recalibrate_b: 
-    input: 
+    input:
+       "{sample}.split.bam", 
        "{sample}.recal_data.table"
     params: 
-       genome= config['GENOME'], 
+       genome = expand("{genome}.fasta", genome= config['GENOME']), 
     output: 
        "{sample}.recalibrated.bam"
     shell: 
       """ 
-        gatk ApplyBQSR -I {input} -R {params.genome} --bqsr-recal-file {input} --disable-sequence-dictionary-validation -O {output}
+        gatk ApplyBQSR -I {input[0]} -R {params.genome} --bqsr-recal-file {input[1]} --disable-sequence-dictionary-validation -O {output}
       """
 
 rule tovcf:
@@ -188,5 +192,3 @@ rule jointcall:
         """
           gatk --java-options {params.mem} GenotypeGVCFs -R {input.genome} -V gendb://{input.DB} -O {output} -G StandardAnnotation -G AS_StandardAnnotation
         """
-
-
