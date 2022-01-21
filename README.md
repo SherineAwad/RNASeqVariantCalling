@@ -11,7 +11,7 @@ Snakemake Workflow for Variant Calling for RNASeq
 This is a GATK variant calling for RNASeq snakemake pipeline written by Sherine Awad. 
 
 
-We are using GATK4 GVCF mode. To run the pipeline, edit the config file to match your samples file name and reference genome. 
+To run the pipeline, edit the config file to match your samples file name and reference genome. 
 Your files should be by default in samples.tsv. Change this file name in config file if needed. 
 
 
